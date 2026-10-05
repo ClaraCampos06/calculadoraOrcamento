@@ -166,9 +166,9 @@ function montarMensagem(estimativa, escolhas) {
 // PASSO 7: mostrar na tela e ativar o botão
 // =====================================================
 function mostrarResultado(estimativa, escolhas) {
-    textoResultado.textContent =
-        "Estimativa: " + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo) +
-        ". Este valor é apenas uma noção aproximada. O orçamento final é passado pelo tatuador.";
+    textoResultado.innerHTML =
+    "Estimativa:" + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo) + "" +
+    "Este valor é apenas uma noção aproximada. O orçamento final é passado pelo tatuador." ;
 
     const mensagem = montarMensagem(estimativa, escolhas);
 
