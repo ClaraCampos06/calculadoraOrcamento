@@ -1,0 +1,143 @@
+@import url('https://fonts.googleapis.com/css2?family=Average+Sans&family=Cantarell:wght@400;700&family=Noto+Sans+JP:wght@100..900&display=swap');
+
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root{
+    --fina: "Cantarell", sans-serif;
+    --media: "Average Sans", sans-serif;
+    --redonda: "Noto Sans JP", sans-serif;
+    --borda: rgba(255, 255, 255, 0.35);
+    --fundo-card: rgba(0, 0, 0, 0.74);
+}
+
+body{
+    
+    background-image: url(admin.jpg);
+    background-size: cover;
+    background-position: center;
+    background-attachment: fixed;
+    min-height: 100vh;
+    color: white;
+    font-family: var(--redonda);
+    padding: 20px;
+    backdrop-filter: blur(2px) brightness(.5);
+}
+
+h1{
+    width: 100%;
+    height: 20vh;
+    font-family: var(--fina);
+    font-weight: lighter;
+  
+    font-size: 4em;
+    text-align: center;
+    margin-bottom: 20px;
+}
+h1 p{
+    font-size: .4em;
+    text-transform: uppercase;
+}
+
+.login{
+   
+    width: 100%;
+    height: 10vh;
+    display: flex;
+    justify-content: center;
+    gap: 2%;
+    flex-wrap: wrap;
+    margin-bottom: 16px;
+}
+
+#senha{
+    width: 20%;
+   background-color: transparent;
+   border: 1px solid white;
+   color: white;
+   font-size: 1.3em;
+}
+
+#senha::placeholder{
+    color: rgba(255, 255, 255, 0.541);
+}
+
+#entrar{
+   background-color: transparent;
+   border: 1px solid white;
+    width: 10%;
+    color: white;
+    font-size: 1.3em;
+}
+
+input:focus{
+    outline: none;
+    border-color: #c9a24d;
+}
+
+button{
+    cursor: pointer;
+    text-transform: uppercase;
+    transition: background-color .2s, color .2s;
+}
+
+button:hover{
+    background-color: white;
+    color: black;
+}
+
+#mensagem{
+    text-align: center;
+    font-family: var(--media);
+    margin-bottom: 16px;
+}
+
+.tabela-wrap{
+    width: 100%;
+    margin: 0 auto;
+    background-color: var(--fundo-card);
+    padding: 14px;
+    overflow-x: auto;
+}
+
+table{
+    width: 100%;
+    border-collapse: collapse;
+    font-family: var(--fina);
+}
+
+th,
+td{
+    padding: 10px 14px;
+    text-align: left;
+    white-space: nowrap;
+    border-bottom: 1px solid var(--borda);
+}
+
+th{
+    font-weight: bold;
+    text-transform: uppercase;
+    font-size: .8em;
+    letter-spacing: .05em;
+}
+
+tbody tr:hover{
+    background-color: rgba(255, 255, 255, 0.08);
+}
+
+[hidden]{
+    display: none !important;
+}
+
+@media (max-width: 599px){
+    h1{
+        font-size: 1.5em;
+    }
+    .login input{
+        flex: 1;
+        min-width: 0;
+    }
+}

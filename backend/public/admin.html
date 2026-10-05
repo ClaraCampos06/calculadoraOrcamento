@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin | Orçamentos</title>
+    <link rel="stylesheet" href="admin.css">
+</head>
+<body>
+    <h1>inkBudget() 
+        <p>orçamentos</p>
+    </h1>
+
+    <div class="login">
+        <input type="password" id="senha" placeholder="Senha do admin">
+        <button id="entrar">Entrar</button>
+    </div>
+
+    <p id="mensagem"></p>
+
+    <div class="tabela-wrap">
+        <table id="tabela" hidden>
+            <thead>
+<tr>
+    <th>Data</th>
+    <th>Nome</th>
+    <th>WhatsApp</th>
+    <th>Tamanho</th>
+    <th>Estilo</th>
+    <th>Cor</th>
+    <th>Região</th>
+    <th>Detalhes</th>
+    <th>Estimativa</th>
+</tr>
+            </thead>
+            <tbody id="corpo"></tbody>
+        </table>
+    </div>
+
+    <script>
+        const campoSenha = document.getElementById("senha");
+        const botao = document.getElementById("entrar");
+        const mensagem = document.getElementById("mensagem");
+        const tabela = document.getElementById("tabela");
+        const corpo = document.getElementById("corpo");
+
+        function formatarReal(valor) {
+            return valor.toLocaleString("pt-BR", {
+                style: "currency", currency: "BRL", maximumFractionDigits: 0
+            });
+        }
+
+        function formatarData(texto) {
+            // o SQLite guarda em UTC, então avisamos o JS para converter
+            const data = new Date(texto.replace(" ", "T") + "Z");
+            return data.toLocaleString("pt-BR");
+        }
+
+        async function carregar() {
+            mensagem.textContent = "Carregando...";
+            tabela.hidden = true;
+
+            try {
+                const resposta = await fetch("/api/admin/orcamentos", {
+                    headers: { "x-admin-token": campoSenha.value }
+                });
+
+                if (resposta.status === 401) {
+                    mensagem.textContent = "Senha incorreta.";
+                    return;
+                }
+                if (!resposta.ok) {
+                    mensagem.textContent = "Erro ao buscar os orçamentos.";
+                    return;
+                }
+
+                const lista = await resposta.json();
+                corpo.textContent = "";
+
+                lista.forEach(function (o) {
+                    const linha = document.createElement("tr");
+                    const colunas = [
+    formatarData(o.criado_em),
+    o.nome || "-",
+    formatarTelefone(o.telefone),
+    o.tamanho + " cm",
+    o.estilo,
+    o.cor,
+    o.regiao,
+    o.detalhes,
+    formatarReal(o.minimo) + " a " + formatarReal(o.maximo)
+];;
+                    colunas.forEach(function (texto) {
+                        const celula = document.createElement("td");
+                        celula.textContent = texto;
+                        linha.appendChild(celula);
+                    });
+                    corpo.appendChild(linha);
+                });
+
+                mensagem.textContent = lista.length + " orçamento(s) encontrado(s).";
+                tabela.hidden = false;
+            } catch (erro) {
+                mensagem.textContent = "Não foi possível conectar ao servidor.";
+            }
+        }
+        function formatarTelefone(numero) {
+    if (!numero) return "-";
+    if (numero.length === 11) {
+        return "(" + numero.slice(0, 2) + ") " + numero.slice(2, 7) + "-" + numero.slice(7);
+    }
+    return "(" + numero.slice(0, 2) + ") " + numero.slice(2, 6) + "-" + numero.slice(6);
+}
+
+        botao.addEventListener("click", carregar);
+        campoSenha.addEventListener("keydown", function (e) {
+            if (e.key === "Enter") carregar();
+        });
+    </script>
+</body>
+</html>
