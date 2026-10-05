@@ -12,32 +12,59 @@
 }
 
 body{
-   background-image: url(mobile.jpg);
-    display: flex;
+   background-image: url(img/men2.jpg);
+   background-size: cover;
+   background-repeat: no-repeat;
+   background-position: center;
     width: 100%;
-    height: 100%;
+    height: 120vh;
+    display: flex;
+    justify-content: start;
     color: white;
     flex-wrap: wrap;
-    gap: 10px;
-    align-items: center;
-    justify-content: center;
+    backdrop-filter: blur(2px) brightness(.5);
+    
 }
 
 .header{
 
     width: 100%;
-    height: 15vh;
+    height: 12vh;
    
+    padding: 0;
     display: flex;
     align-items: center;
-    flex-direction: column;
+    flex-direction: row;
+    flex-wrap: wrap;
     justify-content: space-evenly;
 }
+
 .header h1{
+        width: 30%;
+    height: 70%;
+    font-size: 1.5em;
+    display: flex;
+    align-items: center;
+    padding-left: 2%;
+    text-align: center;
+    font-family: var(--redonda);
+    font-weight: lighter;
+
+}
+.header h2{
+    width: 70%;
+    height: 70%;
+    display: flex;
+    align-items: center;
+    padding-left: 2%;
     font-size: 1.5em;
     text-align: center;
-    font-family: var(--fina);
+    font-family: var(--redonda);
+    font-weight: lighter;
+    
+    
 }
+
 .header p{
     font-size: 1em;
     text-align: center;
@@ -47,13 +74,12 @@ body{
 
 main{
     width: 100%;
-    height: 100%;
+    height: 88vh;
     padding: 0;
-    background-color: rgba(0, 0, 0, 0.548);
 
     display: flex;
     flex-direction: column;
-    justify-content: start;
+    justify-content: center;
     align-items: center;
 
 }
@@ -61,13 +87,16 @@ main{
 
     width: 100%;
     height: 100%;
+   
     display: flex;
     align-items: center;
     flex-direction: column;
+    justify-content: space-between;
+    gap: 10px;
 }
 fieldset{
     width: 80%;
-    height: 12%;
+    height: 13%;
     font-family: var(--redonda);
     padding: 5px;
 }
@@ -89,9 +118,13 @@ button{
     text-transform: uppercase;
     background-color: transparent;
     border: 1px solid white;
+ 
 }
 .resultado{
-    margin-top: 7%;
+    width: 100%;
+   
+    height: 13%;
+  
     font-size: 1em;
     text-align: center;
     font-family: var(--fina);
