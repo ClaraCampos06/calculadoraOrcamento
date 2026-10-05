@@ -168,7 +168,7 @@ function montarMensagem(estimativa, escolhas) {
 function mostrarResultado(estimativa, escolhas) {
     textoResultado.innerHTML =
     "Estimativa:" + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo) + "" +
-    "Este valor é apenas uma noção aproximada. O orçamento final é passado pelo tatuador." ;
+    " Este valor é apenas uma noção aproximada. O orçamento final é passado pelo tatuador." ;
 
     const mensagem = montarMensagem(estimativa, escolhas);
 

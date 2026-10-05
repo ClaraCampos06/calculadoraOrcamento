@@ -74,8 +74,10 @@ main{
 fieldset{
     
     width: 80%;
-    height: 15%;
+    height: 19%;
     font-family: var(--redonda);
+    padding: 5px;
+  
 }
 
 fieldset legend{
@@ -90,15 +92,15 @@ fieldset label{
 }
 
 button{
-    height: 40px;
+    height: 11%;
     width: 60%;
     color: white;
     text-transform: uppercase;
     background-color: transparent;
     border: 1px solid white;
+    padding: 5px;
 }
 .resultado{
-    margin-top: 7%;
     font-size: 1.3em;
     text-align: center;
     font-family: var(--fina);
