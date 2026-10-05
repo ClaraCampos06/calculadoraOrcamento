@@ -1,0 +1,137 @@
+*{
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+
+:root{
+    --fina:"Cantarell", sans-serif;
+    --media:"Average Sans", sans-serif;
+    --redonda:  "Noto Sans JP", sans-serif;
+}
+
+body{
+    background-image: url(foto.jpg);
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    display: flex;
+    width: 100%;
+    height: 100%;
+    color: white;
+    flex-wrap: wrap;
+    gap: 10px;
+    align-items: center;
+    justify-content: center;
+}
+
+.header{
+  
+    width: 100%;
+    height: 20vh;
+    display: flex;
+    align-items: center;
+    flex-direction: column;
+    justify-content: start;
+}
+.header h1{
+    font-size: 3em;
+    font-family: var(--fina);
+}
+.header p{
+    font-size: 1.5em;
+    font-family: var(--media);
+}
+
+
+main{
+    width: 40%;
+    height: 80%;
+    background-color: rgba(0, 0, 0, 0.74);
+    display: flex;
+    flex-direction: column;
+    padding: 14px;
+    justify-content: start;
+    align-items: center;
+
+}
+.formulario{
+
+    width: 100%;
+    height: 80%;
+    display: flex;
+    
+    align-items: center;
+    
+    flex-direction: column;
+    gap: 20px;
+}
+fieldset{
+    
+    width: 80%;
+    height: 15%;
+    font-family: var(--redonda);
+}
+
+fieldset legend{
+    margin-left: 4%;
+    font-weight: bold;
+    font-family: var(--fina);
+}
+
+fieldset label{
+    font-size: .9em;
+    padding: 5px;
+}
+
+button{
+    height: 40px;
+    width: 60%;
+    color: white;
+    text-transform: uppercase;
+    background-color: transparent;
+    border: 1px solid white;
+}
+.resultado{
+    margin-top: 7%;
+    font-size: 1.3em;
+    text-align: center;
+    font-family: var(--fina);
+
+}
+input{
+    background-color: transparent;
+    color: white;
+    font-family: var(--fina);
+    border: 1.2px solid white;
+}
+
+select{
+    background-color: transparent;
+    color: white;
+    font-family: var(--fina);
+    border: 1.2px solid white;
+}
+
+select option{
+    background-color: black;
+}
+.botao-whatsapp{
+    display: inline-block;
+    margin-top: 16px;
+    padding: 10px 20px;
+    color: white;
+    text-decoration: none;
+    text-transform: uppercase;
+    font-size: .7em;
+    border: 1px solid white;
+}
+
+.botao-whatsapp:hover{
+    background-color: white;
+    color: black;
+}
+
+[hidden]{
+    display: none !important;
+}
