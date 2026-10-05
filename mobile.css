@@ -1,3 +1,4 @@
+@media (max-width: 599px){
 *{
     margin: 0;
     padding: 0;
@@ -131,4 +132,4 @@ select option{
 
 [hidden]{
     display: none !important;
-}
+}}
