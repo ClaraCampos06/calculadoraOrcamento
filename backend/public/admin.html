@@ -17,6 +17,7 @@
     </div>
 
     <p id="mensagem"></p>
+    <button id="baixar" hidden>Baixar planilha (CSV)</button>
 
     <div class="tabela-wrap">
         <table id="tabela" hidden>
@@ -43,6 +44,8 @@
         const mensagem = document.getElementById("mensagem");
         const tabela = document.getElementById("tabela");
         const corpo = document.getElementById("corpo");
+        const botaoBaixar = document.getElementById("baixar");
+let dadosAtuais = [];
 
         function formatarReal(valor) {
             return valor.toLocaleString("pt-BR", {
@@ -55,10 +58,43 @@
             const data = new Date(texto.replace(" ", "T") + "Z");
             return data.toLocaleString("pt-BR");
         }
+        function celulaCsv(valor) {
+    let texto = String(valor ?? "");
+    // evita que o Excel execute como fórmula o que o cliente digitou
+    if (/^[=+\-@]/.test(texto)) texto = "'" + texto;
+    return '"' + texto.replace(/"/g, '""') + '"';
+}
+
+function baixarCsv() {
+    const cabecalho = ["Data", "Nome", "WhatsApp", "Tamanho (cm)", "Estilo", "Cor",
+                       "Região", "Detalhes", "Mínimo", "Máximo"];
+
+    const linhas = dadosAtuais.map(function (o) {
+        return [formatarData(o.criado_em), o.nome, o.telefone, o.tamanho, o.estilo,
+                o.cor, o.regiao, o.detalhes, o.minimo, o.maximo];
+    });
+
+    const csv = [cabecalho, ...linhas]
+        .map(function (linha) { return linha.map(celulaCsv).join(";"); })
+        .join("\r\n");
+
+    // o \uFEFF faz o Excel entender os acentos
+    const arquivo = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+    const url = URL.createObjectURL(arquivo);
+
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "orcamentos-" + new Date().toISOString().slice(0, 10) + ".csv";
+    link.click();
+    URL.revokeObjectURL(url);
+}
+
+botaoBaixar.addEventListener("click", baixarCsv);
 
         async function carregar() {
             mensagem.textContent = "Carregando...";
-            tabela.hidden = true;
+            tabela.hidden = true; 
+            botaoBaixar.hidden = true;
 
             try {
                 const resposta = await fetch("/api/admin/orcamentos", {
@@ -76,6 +112,7 @@
 
                 const lista = await resposta.json();
                 corpo.textContent = "";
+                dadosAtuais = lista;
 
                 lista.forEach(function (o) {
                     const linha = document.createElement("tr");
@@ -100,6 +137,7 @@
 
                 mensagem.textContent = lista.length + " orçamento(s) encontrado(s).";
                 tabela.hidden = false;
+                botaoBaixar.hidden = false;
             } catch (erro) {
                 mensagem.textContent = "Não foi possível conectar ao servidor.";
             }

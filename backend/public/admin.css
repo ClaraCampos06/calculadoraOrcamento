@@ -26,7 +26,10 @@ body{
     padding: 20px;
     backdrop-filter: blur(2px) brightness(.5);
 }
-
+#baixar{
+    display: block;
+    margin: 0 auto 16px;
+}
 h1{
     width: 100%;
     height: 20vh;
