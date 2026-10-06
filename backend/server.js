@@ -2,11 +2,40 @@ require("dotenv").config()
 
 const db = require("./db")
 const precos = require("./precos")
-const agenda = require("./agenda")          // NOVO (passo 2)
+const agenda = require("./agenda")
 const express = require("express")
 const path = require("path")
+const rateLimit = require("express-rate-limit")
 
 const app = express()
+
+// no Render existe um intermediário (proxy); sem isso todos pareceriam o mesmo IP
+app.set("trust proxy", 1)
+
+const limitePedidos = rateLimit({
+    windowMs: 60 * 60 * 1000,   // 1 hora
+    limit: 10,                  // 10 pedidos por hora por IP
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { erro: "Muitos pedidos em pouco tempo. Tente novamente mais tarde." }
+})
+
+const limiteHorarios = rateLimit({
+    windowMs: 60 * 1000,        // 1 minuto
+    limit: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { erro: "Muitas consultas. Aguarde um instante." }
+})
+
+const limiteAdmin = rateLimit({
+    windowMs: 15 * 60 * 1000,   // 15 minutos
+    limit: 10,                  // 10 tentativas ERRADAS
+    skipSuccessfulRequests: true,   // acertos não contam
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { erro: "Muitas tentativas. Aguarde 15 minutos." }
+})
 
 const PORTA = process.env.PORT || 3000
 
@@ -23,8 +52,8 @@ function arredondar(valor) {
     return Math.round(valor / 10) * 10
 }
 
-// NOVO (passo 2): horários livres de um dia
-app.get("/api/horarios", (req, res) => {
+// horários livres de um dia
+app.get("/api/horarios", limiteHorarios, (req, res) => {          // ADICIONADO: limiteHorarios
     const data = String(req.query.data || "")
 
     if (!agenda.dataValida(data)) {
@@ -58,13 +87,13 @@ app.get("/api/horarios", (req, res) => {
     res.json({ horarios: livres })
 })
 
-app.post("/api/orcamento", (req, res) => {
+app.post("/api/orcamento", limitePedidos, (req, res) => {         // ADICIONADO: limitePedidos
     const { estilo, cor, regiao, detalhes } = req.body
     const tamanho = Number(req.body.tamanho)
     const nome = String(req.body.nome || "").trim()
     const telefone = String(req.body.telefone || "").replace(/\D/g, "")
-    const data = String(req.body.data || "")          // NOVO (passo 3)
-    const horario = String(req.body.horario || "")    // NOVO (passo 3)
+    const data = String(req.body.data || "")
+    const horario = String(req.body.horario || "")
 
     // validar: nunca confie no que vem do navegador
     if (!tamanho || tamanho <= 0 || tamanho > 100) {
@@ -77,7 +106,7 @@ app.post("/api/orcamento", (req, res) => {
         return res.status(400).json({ erro: "Informe um WhatsApp válido, com DDD." })
     }
 
-    // NOVO (passo 3): validar data e horário
+    // validar data e horário
     const hoje = agenda.hoje()
     if (!agenda.dataValida(data) ||
         data < hoje ||
@@ -89,6 +118,17 @@ app.post("/api/orcamento", (req, res) => {
     if (data === hoje && horario <= agenda.agora()) {
         return res.status(400).json({ erro: "Esse horário já passou. Escolha outro." })
     }
+
+    // ADICIONADO: máximo de 2 agendamentos em aberto por WhatsApp
+    const emAberto = db
+        .prepare("SELECT COUNT(*) AS total FROM orcamentos WHERE telefone = ? AND status != 'cancelado' AND data >= ?")
+        .get(telefone, hoje).total
+
+    if (emAberto >= 2) {
+        return res.status(429).json({ erro: "Você já tem 2 agendamentos em aberto. Aguarde o retorno do estúdio." })
+    }
+
+    
 
     if (!Object.hasOwn(precos.estilo, estilo) ||
         !Object.hasOwn(precos.cores, cor) ||
@@ -105,7 +145,7 @@ app.post("/api/orcamento", (req, res) => {
     const minimo = Math.max(arredondar(total * (1 - precos.margem)), precos.valorMinimo)
     const maximo = Math.max(arredondar(total * (1 + precos.margem)), minimo)
 
-    // NOVO (passo 3): gravar com data, horário e status
+    // gravar com data, horário e status
     try {
         db.prepare(`
             INSERT INTO orcamentos
@@ -122,7 +162,7 @@ app.post("/api/orcamento", (req, res) => {
     res.json({ minimo, maximo, numero: NUMERO_ESTUDIO, data, horario })
 })
 
-app.get("/api/admin/orcamentos", (req, res) => {
+app.get("/api/admin/orcamentos", limiteAdmin, (req, res) => {     // ADICIONADO: limiteAdmin
     const token = req.get("x-admin-token")
 
     if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
@@ -133,7 +173,7 @@ app.get("/api/admin/orcamentos", (req, res) => {
     res.json(lista)
 })
 
-app.patch("/api/admin/orcamentos/:id/status", (req, res) => {
+app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, (req, res) => {   // ADICIONADO: limiteAdmin
     const token = req.get("x-admin-token")
 
     if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {

@@ -16,7 +16,7 @@
 
 body{
     
-    background-image: url(admin.jpg);
+    background-image: url(../img/admin.jpg);
     background-size: cover;
     background-position: center;
     background-attachment: fixed;
@@ -104,9 +104,8 @@ button:hover{
 }
 
 .tabela-wrap{
-    width: 100%;
+    width: 100vw;
     margin: 0 auto;
-    
     padding: 14px;
     overflow-x: auto;
 }
