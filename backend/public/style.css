@@ -15,11 +15,7 @@
 }
 
 body{
-    background-image: url(../img/mobile.jpg);
-    background-position: center;
-    background-size: cover;
-   background-attachment: fixed;
-    background-repeat: no-repeat;
+    background: linear-gradient(180deg,rgba(0, 0, 0, 1) 0%, rgba(12, 20, 8, 1) 30%, rgba(71, 97, 60, 1) 100%);
     backdrop-filter: blur(2px) brightness(.45);
     color: white;
     font-family: var(--redonda);
@@ -159,9 +155,7 @@ input[type="date"]{
 /* telas maiores */
 @media (min-width: 600px){
     body{
-        background-image: url(../img/admin.jpg);
-        background-position: center;
-        background-size: cover;
+       background: linear-gradient(180deg,rgba(0, 0, 0, 1) 0%, rgba(12, 20, 8, 1) 30%, rgba(71, 97, 60, 1) 100%);
         backdrop-filter: blur(2px) brightness(.45);
         font-family: var(--redonda);
         font-weight: lighter;
