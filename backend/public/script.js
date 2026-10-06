@@ -2,9 +2,54 @@ const formulario = document.getElementById("formularioOrcamento");
 const textoResultado = document.getElementById("textoResultado");
 const linkWhatsapp = document.getElementById("linkWhatsapp");
 
+const campoData = document.getElementById("data");
+const campoHorario = document.getElementById("horario");
+const avisoHorario = document.getElementById("avisoHorario");
+
+// não deixa escolher um dia que já passou
+campoData.min = new Date().toLocaleDateString("sv-SE");
+
+// "2026-10-20" vira "20/10/2026" (sem usar Date, para não mudar o dia por causa do fuso)
+function formatarDataBR(iso) {
+    const partes = iso.split("-");
+    return partes[2] + "/" + partes[1] + "/" + partes[0];
+}
+
+async function carregarHorarios() {
+    campoHorario.textContent = "";
+    campoHorario.disabled = true;
+    avisoHorario.textContent = "";
+
+    if (!campoData.value) return;
+
+    try {
+        const resposta = await fetch("/api/horarios?data=" + campoData.value);
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+            avisoHorario.textContent = dados.erro;
+            return;
+        }
+        if (dados.horarios.length === 0) {
+            avisoHorario.textContent = "Sem horários livres nesse dia. Escolha outra data.";
+            return;
+        }
+
+        campoHorario.add(new Option("Escolha um horário", ""));
+        dados.horarios.forEach(function (h) {
+            campoHorario.add(new Option(h, h));
+        });
+        campoHorario.disabled = false;
+    } catch (erro) {
+        avisoHorario.textContent = "Não foi possível carregar os horários.";
+    }
+}
+
+campoData.addEventListener("change", carregarHorarios);
+
 formulario.addEventListener("submit", async function (evento) {
     evento.preventDefault();
-    // ... o resto continua igual
+
     const tamanho = Number(document.getElementById("tamanho").value);
     const estilo = document.getElementById("estilo").value;
     const regiao = document.getElementById("regiaoCorpo").value;
@@ -12,6 +57,8 @@ formulario.addEventListener("submit", async function (evento) {
     const corSelecionada = document.querySelector('input[name="cores"]:checked');
     const nome = document.getElementById("nome").value.trim();
     const telefone = document.getElementById("telefone").value.replace(/\D/g, "");
+    const data = campoData.value;
+    const horario = campoHorario.value;
 
     if (!tamanho || tamanho <= 0) {
         mostrarErro("Informe o tamanho aproximado em centímetros.");
@@ -19,6 +66,14 @@ formulario.addEventListener("submit", async function (evento) {
     }
     if (!corSelecionada) {
         mostrarErro("Escolha entre preto e branco ou colorida.");
+        return;
+    }
+    if (!data) {
+        mostrarErro("Escolha o dia desejado.");
+        return;
+    }
+    if (!horario) {
+        mostrarErro("Escolha um horário disponível.");
         return;
     }
     if (nome.length < 2) {
@@ -30,21 +85,23 @@ formulario.addEventListener("submit", async function (evento) {
         return;
     }
     const cor = corSelecionada.value;
-    
+
     try {
         const resposta = await fetch("/api/orcamento", {
             method: "POST",
             headers: { "Content-Type": "application/json" },
-            body: JSON.stringify({ tamanho, estilo, cor, regiao, detalhes, nome, telefone })
+            body: JSON.stringify({ tamanho, estilo, cor, regiao, detalhes, nome, telefone, data, horario })
         });
         const dados = await resposta.json();
 
         if (!resposta.ok) {
             mostrarErro(dados.erro);
+            carregarHorarios();   // atualiza a lista (alguém pode ter reservado antes)
             return;
         }
 
         const escolhas = {
+            nome: nome,
             tamanho: tamanho,
             estilo: textoDoSelect("estilo"),
             cor: cor,
@@ -52,6 +109,7 @@ formulario.addEventListener("submit", async function (evento) {
             detalhes: textoDoSelect("detalhes")
         };
         mostrarResultado(dados, escolhas);
+        carregarHorarios();       // o horário que você acabou de reservar some da lista
     } catch (erro) {
         mostrarErro("Não foi possível calcular agora. Tente novamente.");
     }
@@ -89,6 +147,7 @@ function montarMensagem(estimativa, escolhas) {
         "*Cores:* " + escolhas.cor,
         "*Região:* " + escolhas.regiao,
         "*Detalhes:* " + escolhas.detalhes,
+        "Data: " + formatarDataBR(estimativa.data) + " às " + estimativa.horario,
         "",
         "*Estimativa do site:* " + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo),
         "",
@@ -106,6 +165,10 @@ function mostrarResultado(estimativa, escolhas) {
     textoResultado.innerHTML =
         "Estimativa:<br><strong>" + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo) + "</strong><br>" +
         "Este valor é apenas uma noção aproximada. O orçamento final é passado pelo tatuador.";
+
+            textoResultado.innerHTML +=
+        "<br><br>📅 <strong>" + formatarDataBR(estimativa.data) + " às " + estimativa.horario + "</strong>" +
+        "<br><small>Horário reservado como pendente. O tatuador vai avaliar e confirmar com você.</small>";
 
     const mensagem = montarMensagem(estimativa, escolhas);
 

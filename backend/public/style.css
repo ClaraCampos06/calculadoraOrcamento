@@ -1,130 +1,132 @@
-
-
-
-@media (min-width: 600px){
-
 *{
     margin: 0;
     padding: 0;
     box-sizing: border-box;
-    font-family: var(--redonda);
-    font-weight: lighter;
 }
 
 :root{
-    --fina:"Cantarell", sans-serif;
-    --media:"Average Sans", sans-serif;
-    --redonda:  "Noto Sans JP", sans-serif;
+    --fina: "Cantarell", sans-serif;
+    --media: "Average Sans", sans-serif;
+    --redonda: "Noto Sans JP", sans-serif;
+
+    --borda: rgba(255, 255, 255, 0.35);
+    --fundo-card: rgba(0, 0, 0, 0.74);
+    --raio: 6px;
 }
 
 body{
-    background-image: url(admin.jpg);
+    background-image: url(../img/mobile.jpg);
+    background-position: center;
     background-size: cover;
-    background-position: center top;
+   background-attachment: fixed;
     background-repeat: no-repeat;
-    display: flex;
-    width: 100%;
-    height: 120vh;
+    backdrop-filter: blur(2px) brightness(.45);
     color: white;
-    flex-wrap: wrap;
-    gap: 10px;
+    font-family: var(--redonda);
+    display: flex;
+    flex-direction: column;
     align-items: center;
-    justify-content: center;
-    backdrop-filter: blur(2.2px) brightness(.5);
+    gap: 20px;
+    padding: 24px 16px;
 }
 
+
+
 .header{
-  
-    width: 100%;
-    height: 20vh;
     display: flex;
-    align-items: center;
     flex-direction: column;
-    justify-content: start;
+    align-items: center;
+    gap: 4px;
+    text-align: center;
 }
 .header h1{
-    font-size: 3em;
+    font-family: var(--redonda);
+    font-weight: lighter;
+    font-size: 2.4em;
+}
+.header h2{
+    font-family: var(--fina);
+    font-size: 1.2em;
+    font-weight: normal;
+}
+.header p{
     font-family: var(--redonda);
     font-weight: lighter;
 }
-.header p{
-    font-size: 1.5em;
-    font-family: var(--media);
-}
-
 
 main{
-    width: 40%;
-    height: 80%;
-
-    display: flex;
-    flex-direction: column;
-    padding: 14px;
-    justify-content: start;
-    align-items: center;
-
-}
-.formulario{
     width: 100%;
-    height: 80%;
+    max-width: 520px;
+    padding: 20px;
+}
+
+.formulario{
     display: flex;
-    align-items: center;
     flex-direction: column;
-    gap: 10px;
-
+    gap: 16px;
 }
+
 fieldset{
-    
-    width: 80%;
-    height: 19%;
-    font-family: var(--redonda);
-    padding: 5px;
-  
+    border: 2.6px solid var(--borda);
+    border-radius: var(--raio);
+    padding: 12px 14px 6px;
 }
-
 fieldset legend{
-    margin-left: 4%;
-    font-weight: bold;
     font-family: var(--fina);
+    font-weight: bold;
+    padding: 0 6px;
 }
-
 fieldset label{
     font-size: .9em;
-    padding: 5px;
 }
 
-button{
-    height: 11%;
-    width: 60%;
-    color: white;
-    text-transform: uppercase;
-    background-color: transparent;
-    border: 1px solid white;
-    padding: 5px;
-}
-.resultado{
-    font-size: 1.3em;
-    text-align: center;
-    font-family: var(--fina);
-
-}
-input{
-    background-color: transparent;
-    color: white;
-    font-family: var(--fina);
-    border: 1.2px solid white;
-}
-
+input,
 select{
     background-color: transparent;
     color: white;
     font-family: var(--fina);
     border: 1.2px solid white;
+    border-radius: var(--raio);
+    padding: 8px 10px;
 }
-
+fieldset input:not([type="radio"]),
+fieldset select{
+    display: block;
+    width: 100%;
+    margin: 6px 0 10px;
+}
+input[type="radio"]{
+    margin-right: 6px;
+}
+input[type="radio"] + label{
+    margin-right: 16px;
+}
 select option{
     background-color: black;
 }
+
+button{
+    width: 100%;
+    height: 44px;
+    color: white;
+    text-transform: uppercase;
+    background-color: transparent;
+    border: 1px solid white;
+    border-radius: var(--raio);
+    cursor: pointer;
+}
+button:hover{
+    background-color: white;
+    color: black;
+}
+
+.resultado{
+    margin-top: 8px;
+    text-align: center;
+    font-family: var(--fina);
+    font-size: 1.1em;
+}
+
 .botao-whatsapp{
     display: inline-block;
     margin-top: 16px;
@@ -132,10 +134,10 @@ select option{
     color: white;
     text-decoration: none;
     text-transform: uppercase;
-    font-size: .7em;
+    font-size: .8em;
     border: 1px solid white;
+    border-radius: var(--raio);
 }
-
 .botao-whatsapp:hover{
     background-color: white;
     color: black;
@@ -143,4 +145,36 @@ select option{
 
 [hidden]{
     display: none !important;
-}}
+}
+
+input[type="date"]{
+    color-scheme: dark;
+}
+#avisoHorario{
+    font-size: .85em;
+    color: var(--destaque);
+    margin-bottom: 8px;
+}
+
+/* telas maiores */
+@media (min-width: 600px){
+    body{
+        background-image: url(../img/admin.jpg);
+        background-position: center;
+        background-size: cover;
+        backdrop-filter: blur(2px) brightness(.45);
+        font-family: var(--redonda);
+        font-weight: lighter;
+    
+        padding-top: 40px;
+    }
+    .header h1{
+        font-size: 3em;
+    }
+    .header p{
+        font-size: 1.2em;
+    }
+    main{
+        padding: 28px;
+    }
+}

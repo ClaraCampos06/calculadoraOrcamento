@@ -26,4 +26,25 @@ for (const coluna of ["nome TEXT", "telefone TEXT"]) {
     }
 }
 
+// agendamento: data, horário e status
+for (const coluna of [
+    "data TEXT",
+    "horario TEXT",
+    "status TEXT DEFAULT 'pendente'"
+]) {
+    try {
+        db.exec(`ALTER TABLE orcamentos ADD COLUMN ${coluna}`)
+    } catch (erro) {
+        // coluna já existe
+    }
+}
+
+// trava: não deixa dois agendamentos no mesmo dia e horário
+// (cancelados não contam, então o horário volta a ficar livre)
+db.exec(`
+CREATE UNIQUE INDEX IF NOT EXISTS horario_unico
+ON orcamentos (data, horario)
+WHERE status != 'cancelado' AND data IS NOT NULL
+`)
+
 module.exports = db
