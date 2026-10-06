@@ -29,6 +29,11 @@ body{
 #baixar{
     display: block;
     margin: 0 auto 16px;
+    padding: 8px;
+    background-color: transparent;
+    border: 1px solid white;
+    color: white;
+    text-transform: uppercase;
 }
 h1{
     width: 100%;
