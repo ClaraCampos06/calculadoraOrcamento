@@ -82,7 +82,7 @@ function textoDoSelect(id) {
 function montarMensagem(estimativa, escolhas) {
     const linhas = [
         "*inkBudget()*",
-        "💳Simulação de orçamento:",
+        "Simulação de orçamento:",
         "",
         "*Tamanho:* " + escolhas.tamanho + " cm",
         "*Estilo:* " + escolhas.estilo,
@@ -90,7 +90,7 @@ function montarMensagem(estimativa, escolhas) {
         "*Região:* " + escolhas.regiao,
         "*Detalhes:* " + escolhas.detalhes,
         "",
-        "*💰Estimativa do site:* " + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo),
+        "*Estimativa do site:* " + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo),
         "",
         "Pode me passar o orçamento certinho?"
     ];
