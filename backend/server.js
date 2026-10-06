@@ -133,6 +133,42 @@ app.get("/api/admin/orcamentos", (req, res) => {
     res.json(lista)
 })
 
+app.patch("/api/admin/orcamentos/:id/status", (req, res) => {
+    const token = req.get("x-admin-token")
+
+    if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
+        return res.status(401).json({ erro: "Não autorizado." })
+    }
+
+    const id = Number(req.params.id)
+    const status = String(req.body.status || "")
+
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ erro: "Orçamento inválido." })
+    }
+    if (!["pendente", "confirmado", "cancelado"].includes(status)) {
+        return res.status(400).json({ erro: "Status inválido." })
+    }
+
+    try {
+        const resultado = db
+            .prepare("UPDATE orcamentos SET status = ? WHERE id = ?")
+            .run(status, id)
+
+        if (resultado.changes === 0) {
+            return res.status(404).json({ erro: "Orçamento não encontrado." })
+        }
+    } catch (erro) {
+        // reabrir um cancelado cujo horário já foi reservado por outro cliente
+        if (erro.code === "SQLITE_CONSTRAINT_UNIQUE") {
+            return res.status(409).json({ erro: "Esse horário já foi reservado por outro cliente." })
+        }
+        throw erro
+    }
+
+    res.json({ ok: true })
+})
+
 app.listen(PORTA, () => {
     console.log(`Servidor rodando em http://localhost:${PORTA}`)
 })

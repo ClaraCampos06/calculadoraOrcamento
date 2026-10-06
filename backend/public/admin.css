@@ -139,6 +139,27 @@ tbody tr:hover{
 [hidden]{
     display: none !important;
 }
+.status{
+    display: inline-block;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-size: .8em;
+    text-transform: uppercase;
+    letter-spacing: .05em;
+    border: 1px solid;
+}
+.status.pendente{ color: #e6b84d; }
+.status.confirmado{ color: #4ade80; }
+.status.cancelado{ color: #f87171; }
+
+.acoes{
+    display: flex;
+    gap: 6px;
+}
+.acoes button{
+    padding: 5px 10px;
+    font-size: .8em;
+}
 
 @media (max-width: 599px){
     h1{
