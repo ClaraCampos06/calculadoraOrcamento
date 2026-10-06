@@ -81,14 +81,16 @@ function textoDoSelect(id) {
 // =====================================================
 function montarMensagem(estimativa, escolhas) {
     const linhas = [
-        "Olá! Fiz uma simulação no site e gostaria de conversar sobre uma tatuagem.",
+        "*inkBudget()*",
+        "💳Simulação de orçamento:",
         "",
-        "Tamanho: " + escolhas.tamanho + " cm",
-        "Estilo: " + escolhas.estilo,
-        "Cores: " + escolhas.cor,
-        "Região: " + escolhas.regiao,
-        "Detalhes: " + escolhas.detalhes,
-        "Estimativa do site: " + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo),
+        "*Tamanho:* " + escolhas.tamanho + " cm",
+        "*Estilo:* " + escolhas.estilo,
+        "*Cores:* " + escolhas.cor,
+        "*Região:* " + escolhas.regiao,
+        "*Detalhes:* " + escolhas.detalhes,
+        "",
+        "*💰Estimativa do site:* " + formatarReal(estimativa.minimo) + " a " + formatarReal(estimativa.maximo),
         "",
         "Pode me passar o orçamento certinho?"
     ];
