@@ -239,16 +239,16 @@ app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, (req, res) => {
     let linhas
     if (o.status === "confirmado") {
         linhas = [
-            "✅ *Agendamento confirmado!*",
+            "*Agendamento confirmado!*",
             "",
             "Olá, " + o.nome + "! Seu horário está garantido.",
             "",
-            "📅 *Data:* " + dataBR,
-            "🕐 *Horário:* " + o.horario,
-            "📍 *Local:* " + endereco,
-            "🖋️ *Tatuador(a):* " + tatuador
+            "*Data:* " + dataBR,
+            "*Horário:* " + o.horario,
+            "*Local:* " + endereco,
+            "*Tatuador(a):* " + tatuador
         ]
-        if (mapa) linhas.push("🗺️ *Mapa:* " + mapa)
+        if (mapa) linhas.push("*Mapa:* " + mapa)
         linhas.push("", "Qualquer dúvida é só responder por aqui. Até lá! 🖤")
     } else {
         linhas = [
@@ -256,7 +256,7 @@ app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, (req, res) => {
             "",
             "Infelizmente precisamos cancelar o agendamento de *" + dataBR + " às " + o.horario + "*.",
             "",
-            "Se quiser, é só escolher outro horário pelo site, ou me responder por aqui que a gente combina. 🖤",
+            "Se quiser, é só escolher outro horário pelo site, ou me responder por aqui que a gente combina. ",
             "— " + tatuador
         ]
     }
