@@ -1,6 +1,6 @@
 require("dotenv").config()
 
-const db = require("./db")
+const { pool, iniciar } = require("./db")
 const precos = require("./precos")
 const agenda = require("./agenda")
 const express = require("express")
@@ -31,7 +31,7 @@ const limiteHorarios = rateLimit({
 const limiteAdmin = rateLimit({
     windowMs: 15 * 60 * 1000,   // 15 minutos
     limit: 10,                  // 10 tentativas ERRADAS
-    skipSuccessfulRequests: true,   // acertos não contam
+    skipSuccessfulRequests: true,
     standardHeaders: true,
     legacyHeaders: false,
     message: { erro: "Muitas tentativas. Aguarde 15 minutos." }
@@ -52,8 +52,13 @@ function arredondar(valor) {
     return Math.round(valor / 10) * 10
 }
 
+function adminAutorizado(req) {
+    const token = req.get("x-admin-token")
+    return Boolean(process.env.ADMIN_TOKEN) && token === process.env.ADMIN_TOKEN
+}
+
 // horários livres de um dia
-app.get("/api/horarios", limiteHorarios, (req, res) => {          // ADICIONADO: limiteHorarios
+app.get("/api/horarios", limiteHorarios, async (req, res) => {
     const data = String(req.query.data || "")
 
     if (!agenda.dataValida(data)) {
@@ -72,10 +77,11 @@ app.get("/api/horarios", limiteHorarios, (req, res) => {          // ADICIONADO:
         return res.json({ horarios: [] })
     }
 
-    const ocupados = db
-        .prepare("SELECT horario FROM orcamentos WHERE data = ? AND status != 'cancelado'")
-        .all(data)
-        .map(linha => linha.horario)
+    const resultado = await pool.query(
+        "SELECT horario FROM orcamentos WHERE data = $1 AND status <> 'cancelado'",
+        [data]
+    )
+    const ocupados = resultado.rows.map(linha => linha.horario)
 
     let livres = agenda.horarios.filter(h => !ocupados.includes(h))
 
@@ -87,7 +93,7 @@ app.get("/api/horarios", limiteHorarios, (req, res) => {          // ADICIONADO:
     res.json({ horarios: livres })
 })
 
-app.post("/api/orcamento", limitePedidos, (req, res) => {         // ADICIONADO: limitePedidos
+app.post("/api/orcamento", limitePedidos, async (req, res) => {
     const { estilo, cor, regiao, detalhes } = req.body
     const tamanho = Number(req.body.tamanho)
     const nome = String(req.body.nome || "").trim()
@@ -119,21 +125,23 @@ app.post("/api/orcamento", limitePedidos, (req, res) => {         // ADICIONADO:
         return res.status(400).json({ erro: "Esse horário já passou. Escolha outro." })
     }
 
-    // ADICIONADO: máximo de 2 agendamentos em aberto por WhatsApp
-    const emAberto = db
-        .prepare("SELECT COUNT(*) AS total FROM orcamentos WHERE telefone = ? AND status != 'cancelado' AND data >= ?")
-        .get(telefone, hoje).total
-
-    if (emAberto >= 2) {
+    // máximo de 2 agendamentos em aberto por WhatsApp
+    const contagem = await pool.query(
+        "SELECT COUNT(*)::int AS total FROM orcamentos WHERE telefone = $1 AND status <> 'cancelado' AND data >= $2",
+        [telefone, hoje]
+    )
+    if (contagem.rows[0].total >= 2) {
         return res.status(429).json({ erro: "Você já tem 2 agendamentos em aberto. Aguarde o retorno do estúdio." })
     }
 
-    
+       const invalidos = []
+    if (!Object.hasOwn(precos.estilo, estilo)) invalidos.push("estilo: " + estilo)
+    if (!Object.hasOwn(precos.cores, cor)) invalidos.push("cor: " + cor)
+    if (!Object.hasOwn(precos.regiao, regiao)) invalidos.push("regiao: " + regiao)
+    if (!Object.hasOwn(precos.detalhes, detalhes)) invalidos.push("detalhes: " + detalhes)
 
-    if (!Object.hasOwn(precos.estilo, estilo) ||
-        !Object.hasOwn(precos.cores, cor) ||
-        !Object.hasOwn(precos.regiao, regiao) ||
-        !Object.hasOwn(precos.detalhes, detalhes)) {
+    if (invalidos.length > 0) {
+        console.log("Dados inválidos ->", invalidos)
         return res.status(400).json({ erro: "Dados inválidos." })
     }
 
@@ -147,13 +155,15 @@ app.post("/api/orcamento", limitePedidos, (req, res) => {         // ADICIONADO:
 
     // gravar com data, horário e status
     try {
-        db.prepare(`
-            INSERT INTO orcamentos
-            (nome, telefone, data, horario, status, tamanho, estilo, cor, regiao, detalhes, minimo, maximo)
-            VALUES (?, ?, ?, ?, 'pendente', ?, ?, ?, ?, ?, ?, ?)
-        `).run(nome, telefone, data, horario, tamanho, estilo, cor, regiao, detalhes, minimo, maximo)
+        await pool.query(
+            `INSERT INTO orcamentos
+             (nome, telefone, data, horario, status, tamanho, estilo, cor, regiao, detalhes, minimo, maximo)
+             VALUES ($1, $2, $3, $4, 'pendente', $5, $6, $7, $8, $9, $10, $11)`,
+            [nome, telefone, data, horario, tamanho, estilo, cor, regiao, detalhes, minimo, maximo]
+        )
     } catch (erro) {
-        if (erro.code === "SQLITE_CONSTRAINT_UNIQUE") {
+        // 23505 = a trava do banco recusou: alguém reservou esse horário primeiro
+        if (erro.code === "23505") {
             return res.status(409).json({ erro: "Esse horário acabou de ser reservado. Escolha outro." })
         }
         throw erro
@@ -162,21 +172,17 @@ app.post("/api/orcamento", limitePedidos, (req, res) => {         // ADICIONADO:
     res.json({ minimo, maximo, numero: NUMERO_ESTUDIO, data, horario })
 })
 
-app.get("/api/admin/orcamentos", limiteAdmin, (req, res) => {     // ADICIONADO: limiteAdmin
-    const token = req.get("x-admin-token")
-
-    if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
+app.get("/api/admin/orcamentos", limiteAdmin, async (req, res) => {
+    if (!adminAutorizado(req)) {
         return res.status(401).json({ erro: "Não autorizado." })
     }
 
-    const lista = db.prepare("SELECT * FROM orcamentos ORDER BY id DESC LIMIT 100").all()
-    res.json(lista)
+    const resultado = await pool.query("SELECT * FROM orcamentos ORDER BY id DESC LIMIT 100")
+    res.json(resultado.rows)
 })
 
-app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, (req, res) => {   // ADICIONADO: limiteAdmin
-    const token = req.get("x-admin-token")
-
-    if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
+app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, async (req, res) => {
+    if (!adminAutorizado(req)) {
         return res.status(401).json({ erro: "Não autorizado." })
     }
 
@@ -191,16 +197,16 @@ app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, (req, res) => {   // 
     }
 
     try {
-        const resultado = db
-            .prepare("UPDATE orcamentos SET status = ? WHERE id = ?")
-            .run(status, id)
-
-        if (resultado.changes === 0) {
+        const resultado = await pool.query(
+            "UPDATE orcamentos SET status = $1 WHERE id = $2",
+            [status, id]
+        )
+        if (resultado.rowCount === 0) {
             return res.status(404).json({ erro: "Orçamento não encontrado." })
         }
     } catch (erro) {
         // reabrir um cancelado cujo horário já foi reservado por outro cliente
-        if (erro.code === "SQLITE_CONSTRAINT_UNIQUE") {
+        if (erro.code === "23505") {
             return res.status(409).json({ erro: "Esse horário já foi reservado por outro cliente." })
         }
         throw erro
@@ -209,10 +215,8 @@ app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, (req, res) => {   // 
     res.json({ ok: true })
 })
 
-app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, (req, res) => {
-    const token = req.get("x-admin-token")
-
-    if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
+app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, async (req, res) => {
+    if (!adminAutorizado(req)) {
         return res.status(401).json({ erro: "Não autorizado." })
     }
 
@@ -221,7 +225,9 @@ app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, (req, res) => {
         return res.status(400).json({ erro: "Orçamento inválido." })
     }
 
-    const o = db.prepare("SELECT * FROM orcamentos WHERE id = ?").get(id)
+    const resultado = await pool.query("SELECT * FROM orcamentos WHERE id = $1", [id])
+    const o = resultado.rows[0]
+
     if (!o) {
         return res.status(404).json({ erro: "Orçamento não encontrado." })
     }
@@ -248,15 +254,15 @@ app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, (req, res) => {
             "*Local:* " + endereco,
             "*Tatuador(a):* " + tatuador
         ]
-        if (mapa) linhas.push("*Mapa:* " + mapa)
-        linhas.push("", "Qualquer dúvida é só responder por aqui. Até lá! 🖤")
+        if (mapa) linhas.push(" *Mapa:*" + mapa)
+        linhas.push("", "Qualquer dúvida é só responder por aqui. Até lá!")
     } else {
         linhas = [
             "Olá, " + o.nome + "!",
             "",
             "Infelizmente precisamos cancelar o agendamento de *" + dataBR + " às " + o.horario + "*.",
             "",
-            "Se quiser, é só escolher outro horário pelo site, ou me responder por aqui que a gente combina. ",
+            "Se quiser, é só escolher outro horário pelo site, ou me responder por aqui que a gente combina.",
             "— " + tatuador
         ]
     }
@@ -265,6 +271,20 @@ app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, (req, res) => {
     res.json({ link })
 })
 
-app.listen(PORTA, () => {
-    console.log(`Servidor rodando em http://localhost:${PORTA}`)
+// qualquer erro inesperado vira uma resposta limpa (sem vazar detalhes)
+app.use((erro, req, res, next) => {
+    console.error(erro)
+    res.status(500).json({ erro: "Erro interno. Tente novamente." })
 })
+
+// prepara o banco antes de aceitar visitas
+iniciar()
+    .then(() => {
+        app.listen(PORTA, () => {
+            console.log(`Servidor rodando em http://localhost:${PORTA}`)
+        })
+    })
+    .catch(erro => {
+        console.error("Não foi possível preparar o banco:", erro.message)
+        process.exit(1)
+    })

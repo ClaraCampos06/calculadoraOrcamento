@@ -56,10 +56,8 @@ let dadosAtuais = [];
             });
         }
 
-        function formatarData(texto) {
-            // o SQLite guarda em UTC, então avisamos o JS para converter
-            const data = new Date(texto.replace(" ", "T") + "Z");
-            return data.toLocaleString("pt-BR");
+                function formatarData(texto) {
+            return new Date(texto).toLocaleString("pt-BR");
         }
         function celulaCsv(valor) {
     let texto = String(valor ?? "");
