@@ -6,6 +6,7 @@
     box-sizing: border-box;
     font-family: var(--redonda);
     font-weight: lighter;
+    transition: .5s;
 }
 
 :root{
@@ -32,6 +33,7 @@ body{
     font-weight: lighter;
     padding: 20px;
     backdrop-filter: blur(2px) brightness(.5);
+    transition: .5s;
 }
 #baixar{
     display: block;
@@ -41,6 +43,12 @@ body{
     border: 1px solid white;
     color: white;
     text-transform: uppercase;
+    transition: .5s;
+}
+#baixar:hover{
+    background-color: white;
+    color: black;
+    transition: .5s;
 }
 h1{
     width: 100%;
@@ -75,6 +83,7 @@ h1 p{
    color: white;
    padding: 10px;
    font-size: 1.3em;
+   transition: .5s;
 }
 
 #senha::placeholder{
@@ -87,6 +96,13 @@ h1 p{
     width: 10%;
     color: white;
     font-size: 1.3em;
+    transition: .5s;
+}
+
+#entrar:hover{
+    background-color: white;
+    color: black;
+    transition: .5s;
 }
 
 input:focus{
@@ -95,14 +111,21 @@ input:focus{
 }
 
 button{
+    background-color: transparent;
+    color: white;
+    border: 1px solid white;
     cursor: pointer;
     text-transform: uppercase;
     transition: background-color .2s, color .2s;
+    font-weight: normal;
+    transition: .5s;
 }
 
 button:hover{
     background-color: white;
     color: black;
+    font-weight: normal;
+    transition: .5s;
 }
 
 #mensagem{
@@ -183,8 +206,11 @@ tbody tr:hover{
     color: black;
     border: none;
     font-weight: bold;
+    transition: .5s;
 }
 .acoes .aviso:hover{
-    filter: brightness(0.9);
-    background-color: #25d366;
+    background-color: transparent;
+    border: 1px solid #25d366;
+    color: #25d366;
+    transition: .5s;
 }
