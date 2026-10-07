@@ -119,6 +119,41 @@ async function mudarStatus(id, novoStatus) {
     }
 }
 
+async function avisarCliente(id) {
+    // a janela é aberta já no clique; se esperasse a resposta do servidor, o navegador poderia bloquear o pop-up
+    const janela = window.open("", "_blank");
+
+    try {
+        const resposta = await fetch("/api/admin/orcamentos/" + id + "/aviso", {
+            headers: { "x-admin-token": campoSenha.value }
+        });
+        const dados = await resposta.json();
+
+        if (!resposta.ok) {
+            if (janela) janela.close();
+            alert(dados.erro || "Não foi possível montar a mensagem.");
+            return;
+        }
+
+        if (janela) {
+            janela.location.href = dados.link;
+        } else {
+            window.location.href = dados.link;
+        }
+    } catch (erro) {
+        if (janela) janela.close();
+        alert("Não foi possível conectar ao servidor.");
+    }
+}
+
+function criarBotaoAviso(id) {
+    const b = document.createElement("button");
+    b.textContent = "Avisar cliente";
+    b.className = "aviso";
+    b.addEventListener("click", function () { avisarCliente(id); });
+    return b;
+}
+
 function criarBotao(texto, id, novoStatus) {
     const b = document.createElement("button");
     b.textContent = texto;
@@ -182,12 +217,14 @@ botaoBaixar.addEventListener("click", baixarCsv);
     // ações
     const celulaAcoes = document.createElement("td");
     celulaAcoes.className = "acoes";
-    if (o.status === "pendente") {
+       if (o.status === "pendente") {
         celulaAcoes.appendChild(criarBotao("Confirmar", o.id, "confirmado"));
         celulaAcoes.appendChild(criarBotao("Cancelar", o.id, "cancelado"));
     } else if (o.status === "confirmado") {
+        if (o.data) celulaAcoes.appendChild(criarBotaoAviso(o.id));
         celulaAcoes.appendChild(criarBotao("Cancelar", o.id, "cancelado"));
     } else {
+        if (o.data) celulaAcoes.appendChild(criarBotaoAviso(o.id));
         celulaAcoes.appendChild(criarBotao("Reabrir", o.id, "pendente"));
     }
     linha.appendChild(celulaAcoes);

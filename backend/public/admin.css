@@ -166,3 +166,14 @@ tbody tr:hover{
         min-width: 0;
     }
 }
+
+.acoes .aviso{
+    background-color: #25d366;
+    color: black;
+    border: none;
+    font-weight: bold;
+}
+.acoes .aviso:hover{
+    filter: brightness(0.9);
+    background-color: #25d366;
+}

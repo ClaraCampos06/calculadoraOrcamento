@@ -209,6 +209,62 @@ app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, (req, res) => {   // 
     res.json({ ok: true })
 })
 
+app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, (req, res) => {
+    const token = req.get("x-admin-token")
+
+    if (!process.env.ADMIN_TOKEN || token !== process.env.ADMIN_TOKEN) {
+        return res.status(401).json({ erro: "Não autorizado." })
+    }
+
+    const id = Number(req.params.id)
+    if (!Number.isInteger(id) || id <= 0) {
+        return res.status(400).json({ erro: "Orçamento inválido." })
+    }
+
+    const o = db.prepare("SELECT * FROM orcamentos WHERE id = ?").get(id)
+    if (!o) {
+        return res.status(404).json({ erro: "Orçamento não encontrado." })
+    }
+    if (!o.data || !["confirmado", "cancelado"].includes(o.status)) {
+        return res.status(400).json({ erro: "Só dá para avisar agendamentos confirmados ou cancelados." })
+    }
+
+    const tatuador = process.env.NOME_TATUADOR || "o estúdio"
+    const endereco = process.env.ENDERECO_ESTUDIO || "a combinar"
+    const mapa = process.env.LINK_MAPA || ""
+
+    const partes = o.data.split("-")
+    const dataBR = partes[2] + "/" + partes[1] + "/" + partes[0]
+
+    let linhas
+    if (o.status === "confirmado") {
+        linhas = [
+            "✅ *Agendamento confirmado!*",
+            "",
+            "Olá, " + o.nome + "! Seu horário está garantido.",
+            "",
+            "📅 *Data:* " + dataBR,
+            "🕐 *Horário:* " + o.horario,
+            "📍 *Local:* " + endereco,
+            "🖋️ *Tatuador(a):* " + tatuador
+        ]
+        if (mapa) linhas.push("🗺️ *Mapa:* " + mapa)
+        linhas.push("", "Qualquer dúvida é só responder por aqui. Até lá! 🖤")
+    } else {
+        linhas = [
+            "Olá, " + o.nome + "!",
+            "",
+            "Infelizmente precisamos cancelar o agendamento de *" + dataBR + " às " + o.horario + "*.",
+            "",
+            "Se quiser, é só escolher outro horário pelo site, ou me responder por aqui que a gente combina. 🖤",
+            "— " + tatuador
+        ]
+    }
+
+    const link = "https://wa.me/55" + o.telefone + "?text=" + encodeURIComponent(linhas.join("\n"))
+    res.json({ link })
+})
+
 app.listen(PORTA, () => {
     console.log(`Servidor rodando em http://localhost:${PORTA}`)
 })
