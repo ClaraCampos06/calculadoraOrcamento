@@ -6,6 +6,8 @@ const agenda = require("./agenda")
 const express = require("express")
 const path = require("path")
 const rateLimit = require("express-rate-limit")
+const bcrypt = require("bcryptjs")
+const jwt = require("jsonwebtoken")
 
 const app = express()
 
@@ -37,6 +39,15 @@ const limiteAdmin = rateLimit({
     message: { erro: "Muitas tentativas. Aguarde 15 minutos." }
 })
 
+const limiteLogin = rateLimit({
+    windowMs: 15 * 60 * 1000,   // 15 minutos
+    limit: 10,                  // 10 tentativas ERRADAS
+    skipSuccessfulRequests: true,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { erro: "Muitas tentativas. Aguarde 15 minutos." }
+})
+
 const PORTA = process.env.PORT || 3000
 
 app.use(express.json())
@@ -52,9 +63,27 @@ function arredondar(valor) {
     return Math.round(valor / 10) * 10
 }
 
-function adminAutorizado(req) {
-    const token = req.get("x-admin-token")
-    return Boolean(process.env.ADMIN_TOKEN) && token === process.env.ADMIN_TOKEN
+// porteiro: só deixa passar quem tem um token de login válido
+function exigirLogin(req, res, next) {
+    const cabecalho = req.get("authorization") || ""
+    const token = cabecalho.startsWith("Bearer ") ? cabecalho.slice(7) : ""
+
+    if (!token) {
+        return res.status(401).json({ erro: "Não autorizado." })
+    }
+
+    try {
+        const dados = jwt.verify(token, process.env.JWT_SECRET, { algorithms: ["HS256"] })
+
+        if (dados.papel !== "admin") {
+            return res.status(403).json({ erro: "Sem permissão." })
+        }
+
+        req.usuario = dados
+        next()   // token válido: deixa seguir para a rota
+    } catch (erro) {
+        return res.status(401).json({ erro: "Sessão expirada ou inválida." })
+    }
 }
 
 // horários livres de um dia
@@ -134,7 +163,7 @@ app.post("/api/orcamento", limitePedidos, async (req, res) => {
         return res.status(429).json({ erro: "Você já tem 2 agendamentos em aberto. Aguarde o retorno do estúdio." })
     }
 
-       const invalidos = []
+    const invalidos = []
     if (!Object.hasOwn(precos.estilo, estilo)) invalidos.push("estilo: " + estilo)
     if (!Object.hasOwn(precos.cores, cor)) invalidos.push("cor: " + cor)
     if (!Object.hasOwn(precos.regiao, regiao)) invalidos.push("regiao: " + regiao)
@@ -172,20 +201,14 @@ app.post("/api/orcamento", limitePedidos, async (req, res) => {
     res.json({ minimo, maximo, numero: NUMERO_ESTUDIO, data, horario })
 })
 
-app.get("/api/admin/orcamentos", limiteAdmin, async (req, res) => {
-    if (!adminAutorizado(req)) {
-        return res.status(401).json({ erro: "Não autorizado." })
-    }
+// ---------- ROTAS DO ADMIN (todas exigem login) ----------
 
+app.get("/api/admin/orcamentos", limiteAdmin, exigirLogin, async (req, res) => {
     const resultado = await pool.query("SELECT * FROM orcamentos ORDER BY id DESC LIMIT 100")
     res.json(resultado.rows)
 })
 
-app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, async (req, res) => {
-    if (!adminAutorizado(req)) {
-        return res.status(401).json({ erro: "Não autorizado." })
-    }
-
+app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, exigirLogin, async (req, res) => {
     const id = Number(req.params.id)
     const status = String(req.body.status || "")
 
@@ -215,11 +238,7 @@ app.patch("/api/admin/orcamentos/:id/status", limiteAdmin, async (req, res) => {
     res.json({ ok: true })
 })
 
-app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, async (req, res) => {
-    if (!adminAutorizado(req)) {
-        return res.status(401).json({ erro: "Não autorizado." })
-    }
-
+app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, exigirLogin, async (req, res) => {
     const id = Number(req.params.id)
     if (!Number.isInteger(id) || id <= 0) {
         return res.status(400).json({ erro: "Orçamento inválido." })
@@ -254,7 +273,7 @@ app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, async (req, res) => {
             "*Local:* " + endereco,
             "*Tatuador(a):* " + tatuador
         ]
-        if (mapa) linhas.push(" *Mapa:*" + mapa)
+        if (mapa) linhas.push("*Mapa:* " + mapa)
         linhas.push("", "Qualquer dúvida é só responder por aqui. Até lá!")
     } else {
         linhas = [
@@ -271,11 +290,52 @@ app.get("/api/admin/orcamentos/:id/aviso", limiteAdmin, async (req, res) => {
     res.json({ link })
 })
 
+// ---------- LOGIN ----------
+
+// hash falso: usado quando o e-mail não existe, para o tempo de resposta ser igual
+const HASH_FALSO = bcrypt.hashSync("senha-falsa-para-igualar-o-tempo", 12)
+
+app.post("/api/login", limiteLogin, async (req, res) => {
+    const email = String(req.body.email || "").trim().toLowerCase()
+    const senha = String(req.body.senha || "")
+
+    if (!email || !senha || senha.length > 200) {
+        return res.status(400).json({ erro: "Informe e-mail e senha." })
+    }
+
+    const resultado = await pool.query(
+        "SELECT id, nome, email, papel, senha_hash FROM usuarios WHERE email = $1",
+        [email]
+    )
+    const usuario = resultado.rows[0]
+
+    // compara sempre, mesmo sem usuário, para não revelar quais e-mails existem
+    const confere = await bcrypt.compare(senha, usuario ? usuario.senha_hash : HASH_FALSO)
+
+    if (!usuario || !confere) {
+        return res.status(401).json({ erro: "E-mail ou senha incorretos." })
+    }
+
+    const token = jwt.sign(
+        { sub: usuario.id, papel: usuario.papel },
+        process.env.JWT_SECRET,
+        { algorithm: "HS256", expiresIn: "8h" }
+    )
+
+    res.json({ token, nome: usuario.nome })
+})
+
 // qualquer erro inesperado vira uma resposta limpa (sem vazar detalhes)
 app.use((erro, req, res, next) => {
     console.error(erro)
     res.status(500).json({ erro: "Erro interno. Tente novamente." })
 })
+
+// o servidor se recusa a ligar sem um segredo forte para os tokens
+if (!process.env.JWT_SECRET || process.env.JWT_SECRET.length < 32) {
+    console.error("JWT_SECRET ausente ou curto demais (use pelo menos 32 caracteres).")
+    process.exit(1)
+}
 
 // prepara o banco antes de aceitar visitas
 iniciar()
