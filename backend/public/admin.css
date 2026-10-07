@@ -65,29 +65,44 @@ h1 p{
     text-transform: uppercase;
 }
 
+
 .login{
    
     width: 100%;
-    height: 10vh;
+     height: 50%;
     display: flex;
+    gap: 10px;
+    flex-direction: column;
+    align-items: center;
     justify-content: center;
-    gap: 2%;
-    flex-wrap: wrap;
-    margin-bottom: 16px;
 }
 
-#senha{
+.login input{
     width: 20%;
+   
    background-color: transparent;
    border: 1px solid white;
    color: white;
    padding: 10px;
    font-size: 1.3em;
+
    transition: .5s;
+
 }
 
-#senha::placeholder{
+.login input::placeholder{
     color: rgba(255, 255, 255, 0.541);
+}
+
+.login button{
+   width: 20%;
+   background-color: transparent;
+   border: 1px solid white;
+   color: white;
+   padding: 10px;
+   font-size: 1.3em;
+
+   transition: .5s;
 }
 
 #entrar{
@@ -141,6 +156,26 @@ button:hover{
     overflow-x: auto;
 }
 
+#painel{
+    width: 100%;
+    min-width: 0;
+}
+
+.topo{
+    
+    width: 20%;
+    height: 7vh;
+    display: flex;
+    align-items: center;
+    flex-direction: row;
+    justify-content: space-between;
+    
+}
+
+.topo button{
+    width: 25%;
+    height: 70%;
+}
 table{
     width: 100%;
     border-collapse: collapse;

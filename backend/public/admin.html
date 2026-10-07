@@ -7,172 +7,283 @@
     <link rel="stylesheet" href="admin.css">
 </head>
 <body>
-    <h1>inkBudget() 
+    <h1>inkBudget()
         <p>orçamentos</p>
     </h1>
 
-    <div class="login">
-        <input type="password" id="senha" placeholder="Senha do admin">
-        <button id="entrar">Entrar</button>
-    </div>
+    <!-- TELA DE LOGIN -->
+    <form id="telaLogin" class="login">
+        <input type="email" id="email" placeholder="E-mail" autocomplete="username" required>
+        <input type="password" id="senha" placeholder="Senha" autocomplete="current-password" required>
+        <button type="submit">Entrar</button>
+        <p id="erroLogin" class="erro-login"></p>
+    </form>
 
-    <p id="mensagem"></p>
-    <button id="baixar" hidden>Baixar planilha (CSV)</button>
+    <!-- PAINEL (só aparece depois do login) -->
+    <div id="painel" hidden>
+        <div class="topo">
+            <span id="saudacao"></span>
+            <button id="sair" class="sair">Sair</button>
+        </div>
 
-    <div class="tabela-wrap">
-        <table id="tabela" hidden>
-            <thead>
-<tr>
-    <th>Pedido em</th>
-    <th>Agendado</th>
-    <th>Nome</th>
-    <th>WhatsApp</th>
-    <th>Tamanho</th>
-    <th>Estilo</th>
-    <th>Cor</th>
-    <th>Região</th>
-    <th>Detalhes</th>
-    <th>Estimativa</th>
-    <th>Status</th>
-    <th>Ações</th>
-</tr>
-            </thead>
-            <tbody id="corpo"></tbody>
-        </table>
+        <p id="mensagem"></p>
+        <button id="baixar" hidden>Baixar planilha (CSV)</button>
+
+        <div class="tabela-wrap">
+            <table id="tabela" hidden>
+                <thead>
+                    <tr>
+                        <th>Pedido em</th>
+                        <th>Agendado</th>
+                        <th>Nome</th>
+                        <th>WhatsApp</th>
+                        <th>Tamanho</th>
+                        <th>Estilo</th>
+                        <th>Cor</th>
+                        <th>Região</th>
+                        <th>Detalhes</th>
+                        <th>Estimativa</th>
+                        <th>Status</th>
+                        <th>Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="corpo"></tbody>
+            </table>
+        </div>
     </div>
 
     <script>
+        const telaLogin = document.getElementById("telaLogin");
+        const campoEmail = document.getElementById("email");
         const campoSenha = document.getElementById("senha");
-        const botao = document.getElementById("entrar");
+        const erroLogin = document.getElementById("erroLogin");
+        const painel = document.getElementById("painel");
+        const saudacao = document.getElementById("saudacao");
+        const botaoSair = document.getElementById("sair");
         const mensagem = document.getElementById("mensagem");
+        const botaoBaixar = document.getElementById("baixar");
         const tabela = document.getElementById("tabela");
         const corpo = document.getElementById("corpo");
-        const botaoBaixar = document.getElementById("baixar");
-let dadosAtuais = [];
 
+        let dadosAtuais = [];
+
+        // ---------- sessão (dura só enquanto a aba estiver aberta) ----------
+        function lerSessao(chave) {
+            try { return sessionStorage.getItem(chave) || ""; } catch (e) { return ""; }
+        }
+        function salvarSessao(token, nome) {
+            try {
+                sessionStorage.setItem("inkbudget_token", token);
+                sessionStorage.setItem("inkbudget_nome", nome);
+            } catch (e) { /* sem armazenamento: o login vale só nesta página */ }
+        }
+        function limparSessao() {
+            try {
+                sessionStorage.removeItem("inkbudget_token");
+                sessionStorage.removeItem("inkbudget_nome");
+            } catch (e) { }
+        }
+        function cabecalhoAuth() {
+            return { "Authorization": "Bearer " + lerSessao("inkbudget_token") };
+        }
+
+        // ---------- trocar de tela ----------
+        function mostrarLogin(aviso) {
+            painel.hidden = true;
+            telaLogin.hidden = false;
+            erroLogin.textContent = aviso || "";
+        }
+        function mostrarPainel(nome) {
+            telaLogin.hidden = true;
+            painel.hidden = false;
+            saudacao.textContent = "Olá, " + nome;
+        }
+        function sair(aviso) {
+            limparSessao();
+            dadosAtuais = [];
+            corpo.textContent = "";
+            tabela.hidden = true;
+            botaoBaixar.hidden = true;
+            mostrarLogin(aviso);
+        }
+
+        // ---------- login ----------
+        telaLogin.addEventListener("submit", async function (evento) {
+            evento.preventDefault();
+            erroLogin.textContent = "Entrando...";
+
+            try {
+                const resposta = await fetch("/api/login", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ email: campoEmail.value, senha: campoSenha.value })
+                });
+                const dados = await resposta.json().catch(function () { return {}; });
+
+                if (!resposta.ok) {
+                    erroLogin.textContent = dados.erro || "Não foi possível entrar.";
+                    return;
+                }
+
+                campoSenha.value = "";   // a senha não fica na tela
+                salvarSessao(dados.token, dados.nome);
+                mostrarPainel(dados.nome);
+                carregar();
+            } catch (erro) {
+                erroLogin.textContent = "Não foi possível conectar ao servidor.";
+            }
+        });
+
+        botaoSair.addEventListener("click", function () { sair(""); });
+
+        // ---------- formatação ----------
         function formatarReal(valor) {
             return valor.toLocaleString("pt-BR", {
                 style: "currency", currency: "BRL", maximumFractionDigits: 0
             });
         }
 
-                function formatarData(texto) {
+        function formatarData(texto) {
             return new Date(texto).toLocaleString("pt-BR");
         }
+
+        function formatarDataBR(iso) {
+            const partes = iso.split("-");
+            return partes[2] + "/" + partes[1] + "/" + partes[0];
+        }
+
+        function formatarTelefone(numero) {
+            if (!numero) return "-";
+            if (numero.length === 11) {
+                return "(" + numero.slice(0, 2) + ") " + numero.slice(2, 7) + "-" + numero.slice(7);
+            }
+            return "(" + numero.slice(0, 2) + ") " + numero.slice(2, 6) + "-" + numero.slice(6);
+        }
+
+        // ---------- planilha (CSV) ----------
         function celulaCsv(valor) {
-    let texto = String(valor ?? "");
-    // evita que o Excel execute como fórmula o que o cliente digitou
-    if (/^[=+\-@]/.test(texto)) texto = "'" + texto;
-    return '"' + texto.replace(/"/g, '""') + '"';
-}
-
-function baixarCsv() {
-        const cabecalho = ["Pedido em", "Data agendada", "Horário", "Status", "Nome", "WhatsApp",
-                       "Tamanho (cm)", "Estilo", "Cor", "Região", "Detalhes", "Mínimo", "Máximo"];
-
-    const linhas = dadosAtuais.map(function (o) {
-        return [formatarData(o.criado_em), o.data, o.horario, o.status, o.nome, o.telefone,
-                o.tamanho, o.estilo, o.cor, o.regiao, o.detalhes, o.minimo, o.maximo];
-    });
-
-    const csv = [cabecalho, ...linhas]
-        .map(function (linha) { return linha.map(celulaCsv).join(";"); })
-        .join("\r\n");
-
-    // o \uFEFF faz o Excel entender os acentos
-    const arquivo = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
-    const url = URL.createObjectURL(arquivo);
-
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "orcamentos-" + new Date().toISOString().slice(0, 10) + ".csv";
-    link.click();
-    URL.revokeObjectURL(url);
-}
-
-function formatarDataBR(iso) {
-    const partes = iso.split("-");
-    return partes[2] + "/" + partes[1] + "/" + partes[0];
-}
-
-async function mudarStatus(id, novoStatus) {
-    try {
-        const resposta = await fetch("/api/admin/orcamentos/" + id + "/status", {
-            method: "PATCH",
-            headers: {
-                "Content-Type": "application/json",
-                "x-admin-token": campoSenha.value
-            },
-            body: JSON.stringify({ status: novoStatus })
-        });
-
-        if (!resposta.ok) {
-            const dados = await resposta.json();
-            alert(dados.erro || "Não foi possível mudar o status.");
-            return;
-        }
-        carregar();   // recarrega a tabela
-    } catch (erro) {
-        alert("Não foi possível conectar ao servidor.");
-    }
-}
-
-async function avisarCliente(id) {
-    // a janela é aberta já no clique; se esperasse a resposta do servidor, o navegador poderia bloquear o pop-up
-    const janela = window.open("", "_blank");
-
-    try {
-        const resposta = await fetch("/api/admin/orcamentos/" + id + "/aviso", {
-            headers: { "x-admin-token": campoSenha.value }
-        });
-        const dados = await resposta.json();
-
-        if (!resposta.ok) {
-            if (janela) janela.close();
-            alert(dados.erro || "Não foi possível montar a mensagem.");
-            return;
+            let texto = String(valor ?? "");
+            // evita que o Excel execute como fórmula o que o cliente digitou
+            if (/^[=+\-@]/.test(texto)) texto = "'" + texto;
+            return '"' + texto.replace(/"/g, '""') + '"';
         }
 
-        if (janela) {
-            janela.location.href = dados.link;
-        } else {
-            window.location.href = dados.link;
+        function baixarCsv() {
+            const cabecalho = ["Pedido em", "Data agendada", "Horário", "Status", "Nome", "WhatsApp",
+                               "Tamanho (cm)", "Estilo", "Cor", "Região", "Detalhes", "Mínimo", "Máximo"];
+
+            const linhas = dadosAtuais.map(function (o) {
+                return [formatarData(o.criado_em), o.data, o.horario, o.status, o.nome, o.telefone,
+                        o.tamanho, o.estilo, o.cor, o.regiao, o.detalhes, o.minimo, o.maximo];
+            });
+
+            const csv = [cabecalho, ...linhas]
+                .map(function (linha) { return linha.map(celulaCsv).join(";"); })
+                .join("\r\n");
+
+            // o \uFEFF faz o Excel entender os acentos
+            const arquivo = new Blob(["\uFEFF" + csv], { type: "text/csv;charset=utf-8" });
+            const url = URL.createObjectURL(arquivo);
+
+            const link = document.createElement("a");
+            link.href = url;
+            link.download = "orcamentos-" + new Date().toISOString().slice(0, 10) + ".csv";
+            link.click();
+            URL.revokeObjectURL(url);
         }
-    } catch (erro) {
-        if (janela) janela.close();
-        alert("Não foi possível conectar ao servidor.");
-    }
-}
 
-function criarBotaoAviso(id) {
-    const b = document.createElement("button");
-    b.textContent = "Avisar cliente";
-    b.className = "aviso";
-    b.addEventListener("click", function () { avisarCliente(id); });
-    return b;
-}
+        botaoBaixar.addEventListener("click", baixarCsv);
 
-function criarBotao(texto, id, novoStatus) {
-    const b = document.createElement("button");
-    b.textContent = texto;
-    b.addEventListener("click", function () { mudarStatus(id, novoStatus); });
-    return b;
-}
+        // ---------- ações da tabela ----------
+        async function mudarStatus(id, novoStatus) {
+            try {
+                const resposta = await fetch("/api/admin/orcamentos/" + id + "/status", {
+                    method: "PATCH",
+                    headers: Object.assign({ "Content-Type": "application/json" }, cabecalhoAuth()),
+                    body: JSON.stringify({ status: novoStatus })
+                });
 
-botaoBaixar.addEventListener("click", baixarCsv);
+                if (resposta.status === 401 || resposta.status === 403) {
+                    sair("Sessão expirada. Entre novamente.");
+                    return;
+                }
+                if (!resposta.ok) {
+                    const dados = await resposta.json().catch(function () { return {}; });
+                    alert(dados.erro || "Não foi possível mudar o status.");
+                    return;
+                }
+                carregar();
+            } catch (erro) {
+                alert("Não foi possível conectar ao servidor.");
+            }
+        }
 
+        async function avisarCliente(id) {
+            // a janela é aberta já no clique; se esperasse a resposta do servidor, o navegador poderia bloquear o pop-up
+            const janela = window.open("", "_blank");
+
+            try {
+                const resposta = await fetch("/api/admin/orcamentos/" + id + "/aviso", {
+                    headers: cabecalhoAuth()
+                });
+
+                if (resposta.status === 401 || resposta.status === 403) {
+                    if (janela) janela.close();
+                    sair("Sessão expirada. Entre novamente.");
+                    return;
+                }
+
+                const dados = await resposta.json().catch(function () { return {}; });
+
+                if (!resposta.ok) {
+                    if (janela) janela.close();
+                    alert(dados.erro || "Não foi possível montar a mensagem.");
+                    return;
+                }
+
+                if (janela) {
+                    janela.location.href = dados.link;
+                } else {
+                    window.location.href = dados.link;
+                }
+            } catch (erro) {
+                if (janela) janela.close();
+                alert("Não foi possível conectar ao servidor.");
+            }
+        }
+
+        function criarBotao(texto, id, novoStatus) {
+            const b = document.createElement("button");
+            b.textContent = texto;
+            b.addEventListener("click", function () { mudarStatus(id, novoStatus); });
+            return b;
+        }
+
+        function criarBotaoAviso(id) {
+            const b = document.createElement("button");
+            b.textContent = "Avisar cliente";
+            b.className = "aviso";
+            b.addEventListener("click", function () { avisarCliente(id); });
+            return b;
+        }
+
+        // ---------- carregar a tabela ----------
         async function carregar() {
             mensagem.textContent = "Carregando...";
-            tabela.hidden = true; 
+            tabela.hidden = true;
             botaoBaixar.hidden = true;
 
             try {
                 const resposta = await fetch("/api/admin/orcamentos", {
-                    headers: { "x-admin-token": campoSenha.value }
+                    headers: cabecalhoAuth()
                 });
 
-                if (resposta.status === 401) {
-                    mensagem.textContent = "Senha incorreta.";
+                if (resposta.status === 401 || resposta.status === 403) {
+                    sair("Sessão expirada. Entre novamente.");
+                    return;
+                }
+                if (resposta.status === 429) {
+                    mensagem.textContent = "Muitas tentativas. Aguarde 15 minutos.";
                     return;
                 }
                 if (!resposta.ok) {
@@ -184,51 +295,52 @@ botaoBaixar.addEventListener("click", baixarCsv);
                 corpo.textContent = "";
                 dadosAtuais = lista;
 
-               lista.forEach(function (o) {
-    const linha = document.createElement("tr");
-    const colunas = [
-        formatarData(o.criado_em),
-        o.data ? formatarDataBR(o.data) + " às " + o.horario : "-",
-        o.nome || "-",
-        formatarTelefone(o.telefone),
-        o.tamanho + " cm",
-        o.estilo,
-        o.cor,
-        o.regiao,
-        o.detalhes,
-        formatarReal(o.minimo) + " a " + formatarReal(o.maximo)
-    ];
-    colunas.forEach(function (texto) {
-        const celula = document.createElement("td");
-        celula.textContent = texto;
-        linha.appendChild(celula);
-    });
+                lista.forEach(function (o) {
+                    const linha = document.createElement("tr");
+                    const colunas = [
+                        formatarData(o.criado_em),
+                        o.data ? formatarDataBR(o.data) + " às " + o.horario : "-",
+                        o.nome || "-",
+                        formatarTelefone(o.telefone),
+                        o.tamanho + " cm",
+                        o.estilo,
+                        o.cor,
+                        o.regiao,
+                        o.detalhes,
+                        formatarReal(o.minimo) + " a " + formatarReal(o.maximo)
+                    ];
+                    colunas.forEach(function (texto) {
+                        const celula = document.createElement("td");
+                        celula.textContent = texto;
+                        linha.appendChild(celula);
+                    });
 
-    // status
-    const celulaStatus = document.createElement("td");
-    const selo = document.createElement("span");
-    selo.className = "status " + o.status;
-    selo.textContent = o.status;
-    celulaStatus.appendChild(selo);
-    linha.appendChild(celulaStatus);
+                    // status
+                    const celulaStatus = document.createElement("td");
+                    const selo = document.createElement("span");
+                    selo.className = "status " + o.status;
+                    selo.textContent = o.status;
+                    celulaStatus.appendChild(selo);
+                    linha.appendChild(celulaStatus);
 
-    // ações
-    const celulaAcoes = document.createElement("td");
-    celulaAcoes.className = "acoes";
-       if (o.status === "pendente") {
-        celulaAcoes.appendChild(criarBotao("Confirmar", o.id, "confirmado"));
-        celulaAcoes.appendChild(criarBotao("Cancelar", o.id, "cancelado"));
-    } else if (o.status === "confirmado") {
-        if (o.data) celulaAcoes.appendChild(criarBotaoAviso(o.id));
-        celulaAcoes.appendChild(criarBotao("Cancelar", o.id, "cancelado"));
-    } else {
-        if (o.data) celulaAcoes.appendChild(criarBotaoAviso(o.id));
-        celulaAcoes.appendChild(criarBotao("Reabrir", o.id, "pendente"));
-    }
-    linha.appendChild(celulaAcoes);
+                    // ações
+                    const celulaAcoes = document.createElement("td");
+                    celulaAcoes.className = "acoes";
+                    if (o.status === "pendente") {
+                        celulaAcoes.appendChild(criarBotao("Confirmar", o.id, "confirmado"));
+                        celulaAcoes.appendChild(criarBotao("Cancelar", o.id, "cancelado"));
+                    } else if (o.status === "confirmado") {
+                        if (o.data) celulaAcoes.appendChild(criarBotaoAviso(o.id));
+                        celulaAcoes.appendChild(criarBotao("Cancelar", o.id, "cancelado"));
+                    } else {
+                        if (o.data) celulaAcoes.appendChild(criarBotaoAviso(o.id));
+                        celulaAcoes.appendChild(criarBotao("Reabrir", o.id, "pendente"));
+                    }
+                    linha.appendChild(celulaAcoes);
 
-    corpo.appendChild(linha);
-});
+                    corpo.appendChild(linha);
+                });
+
                 mensagem.textContent = lista.length + " orçamento(s) encontrado(s).";
                 tabela.hidden = false;
                 botaoBaixar.hidden = false;
@@ -236,18 +348,14 @@ botaoBaixar.addEventListener("click", baixarCsv);
                 mensagem.textContent = "Não foi possível conectar ao servidor.";
             }
         }
-        function formatarTelefone(numero) {
-    if (!numero) return "-";
-    if (numero.length === 11) {
-        return "(" + numero.slice(0, 2) + ") " + numero.slice(2, 7) + "-" + numero.slice(7);
-    }
-    return "(" + numero.slice(0, 2) + ") " + numero.slice(2, 6) + "-" + numero.slice(6);
-}
 
-        botao.addEventListener("click", carregar);
-        campoSenha.addEventListener("keydown", function (e) {
-            if (e.key === "Enter") carregar();
-        });
+        // ---------- ao abrir a página ----------
+        if (lerSessao("inkbudget_token")) {
+            mostrarPainel(lerSessao("inkbudget_nome") || "");
+            carregar();
+        } else {
+            mostrarLogin("");
+        }
     </script>
 </body>
 </html>
