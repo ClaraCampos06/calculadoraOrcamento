@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/7.3.1/css/all.css" integrity="sha512-x9WwyMYBnlXMNQ6kQ/Lyzu1NqIhLQKL5Oq6xByfXuRj7s9CskyCbLv/1IjqzJmXwFXWr0ov6jBV7Qbc0hh9nHg==" crossorigin="anonymous" referrerpolicy="no-referrer">
     <style>@import url('https://fonts.googleapis.com/css2?family=Average+Sans&family=Cantarell:ital,wght@0,400;0,700;1,400;1,700&family=Hachi+Maru+Pop&family=Noto+Sans+JP:wght@100..900&display=swap');</style>
     <link rel="stylesheet" href="style.css">
@@ -11,123 +12,122 @@
 </head>
 <body>
     <div class="inicio">
-        <div class="logo">
-            <h1>cc</h1>
-            <p>inkBudget()</p>
-        </div>
-
-        <div class="textoInicial">
-            
-            <p id="autenticidade">encontre sua autenticidade</p>
-
-            <p>a melhor experiência te espera aqui</p>
-            <i class="fa-solid fa-arrow-turn-down"></i>
+        <div class="fundoimg">
+            <div class="box1">
+                <h1>cc</h1>
+                <p id="inkBudget">inkBudget()</p>
+            </div>
+            <p>explore possibilidades</p>
+            <div class="textoInicio">
+                <h2>encontre sua auenticidade</h2>
+                <p>a melhor experiência te espera aqui</p>
+            </div>
+            <p>descubra o próximo capítulo da sua expressão</p>
+            <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" viewBox="0 0 16 16" aria-hidden="true" focusable="false">
+                        <path fill-rule="evenodd" d="M1.553 6.776a.5.5 0 0 1 .67-.223L8 9.44l5.776-2.888a.5.5 0 1 1 .448.894l-6 3a.5.5 0 0 1-.448 0l-6-3a.5.5 0 0 1-.223-.67"></path>
+                    </svg>
         </div>
     </div>
   
 
 
-    <div class="header">
-        <h1>CC</h1> 
-        <h2>inkBudget()</h2>
-        <p>Orçamento virtual</p>
-    </div>
+    <div class="bloco2">
+        <div class="introducaofoto">
+            <div class="introducao1">
 
-    <main>
-        <form id="formularioOrcamento" class="formulario">
-            <fieldset>
-                <legend>Tamanho</legend>
-                <label for="tamanho">Tamanho aproximado (cm)</label>
-                <input type="number" name="tamanho" id="tamanho" placeholder="Ex: 50">
-            </fieldset>
+                <h2>sua idéia merece ganhar forma</h2>
+                <p>de uma lembrança a uma história que conte quem você é</p>
 
-            <fieldset>
-                <legend>Estilo</legend>
-                <label for="estilo">Selecione o estilo da tatuagem</label>
-                <select name="estilo" id="estilo">
-                    <option value="realista">Realista</option>
-                    <option value="blackwork">Blackwork</option>
-                    <option value="oriental">Oriental</option>
-                </select>
-            </fieldset>
-
-
-            <fieldset>
-                <legend>Cores</legend>
-
-                <input type="radio" name="cores" id="cores1" value="preto e branco"> 
-                <label for="cores1">Preto e Branco</label>
-
-                <input type="radio" name="cores" id="cores2" value="colorida">
-                <label for="cores2">Colorida</label>
-            </fieldset>
-
-
-            <fieldset>
-                <legend>Região do corpo</legend>
-                 <label for="regiaoCorpo">Região do corpo</label>
-                <select name="regiao" id="regiaoCorpo">
-                    <option value="cabeca">Cabeça</option>
-                    <option value="rosto">Rosto</option>
-                    <option value="pescoco">Pescoço</option>
-                    <option value="torax">Tórax</option>
-                    <option value="braco">Braço</option>
-                    <option value="antebraco">Antebraço</option>
-                    <option value="mao">Mão</option>
-                    <option value="barriga">Barriga</option>
-                    <option value="coxa">Coxa</option>
-                    <option value="canela">Canela</option>
-                    <option value="costas">Costas</option>
-                    <option value="gluteos">Glúteos</option>
+                <div id="parte-introducao">
+                    <p>toda arte nasce de sentimento</p>
                     
-                </select>
-            </fieldset>
+                </div>
+                <p>sua idéia começa aqui</p>
 
-             <fieldset>
-                <legend>Detalhes</legend>
-                <label for="detalhes">Quantidade de detalhes</label>
-                <select name="detalhes" id="detalhes">
-                    <option value="pouco">Pouco</option>
-                    <option value="medio">Médio</option>
-                    <option value="muito">Muito</option>
-                </select>
-            </fieldset>
+            </div>
 
-            <fieldset>
-    <legend>Data e horário</legend>
-
-    <label for="data">Dia</label>
-    <input type="date" name="data" id="data">
-
-    <label for="horario">Horário</label>
-    <select name="horario" id="horario" disabled></select>
-
-    <p id="avisoHorario"></p>
-</fieldset>
-
-
-<fieldset>
-    <legend>Seus dados</legend>
-
-    <label for="nome">Nome</label>
-    <input type="text" name="nome" id="nome" placeholder="Seu nome" maxlength="60" autocomplete="name">
-
-    <label for="telefone">WhatsApp</label>
-    <input type="tel" name="telefone" id="telefone" placeholder="(27) 99999-9999" maxlength="15" autocomplete="tel">
-</fieldset>
-
-<button type="submit">Calcular orçamento</button>
-
-<div class="resultado" id="resultado">
-    <p id="textoResultado"></p>
-    <a id="linkWhatsapp" class="botao-whatsapp" href="#" target="_blank" rel="noopener" hidden>
-        Enviar para o estúdio no WhatsApp
-    </a>
-</div>
-        </form>
-
+        </div>
+        <main>
+            <form id="formularioOrcamento" class="formulario">
+                <fieldset>
+                    <legend>Tamanho</legend>
+                    <label for="tamanho">Tamanho aproximado (cm)</label>
+                    <input type="number" name="tamanho" id="tamanho" placeholder="Ex: 50">
+                </fieldset>
+                <fieldset>
+                    <legend>Estilo</legend>
+                    <label for="estilo">Selecione o estilo da tatuagem</label>
+                    <select name="estilo" id="estilo">
+                        <option value="realista">Realista</option>
+                        <option value="blackwork">Blackwork</option>
+                        <option value="oriental">Oriental</option>
+                    </select>
+                </fieldset>
+                <fieldset>
+                    <legend>Cores</legend>
+                    <input type="radio" name="cores" id="cores1" value="preto e branco">
+                    <label for="cores1">Preto e Branco</label>
+                    <input type="radio" name="cores" id="cores2" value="colorida">
+                    <label for="cores2">Colorida</label>
+                </fieldset>
+                <fieldset>
+                    <legend>Região do corpo</legend>
+                     <label for="regiaoCorpo">Região do corpo</label>
+                    <select name="regiao" id="regiaoCorpo">
+                        <option value="cabeca">Cabeça</option>
+                        <option value="rosto">Rosto</option>
+                        <option value="pescoco">Pescoço</option>
+                        <option value="torax">Tórax</option>
+                        <option value="braco">Braço</option>
+                        <option value="antebraco">Antebraço</option>
+                        <option value="mao">Mão</option>
+                        <option value="barriga">Barriga</option>
+                        <option value="coxa">Coxa</option>
+                        <option value="canela">Canela</option>
+                        <option value="costas">Costas</option>
+                        <option value="gluteos">Glúteos</option>
         
-    </main>
+                    </select>
+                </fieldset>
+                 <fieldset>
+                    <legend>Detalhes</legend>
+                    <label for="detalhes">Quantidade de detalhes</label>
+                    <select name="detalhes" id="detalhes">
+                        <option value="pouco">Pouco</option>
+                        <option value="medio">Médio</option>
+                        <option value="muito">Muito</option>
+                    </select>
+                </fieldset>
+                <fieldset>
+        <legend>Data e horário</legend>
+        <label for="data">Dia</label>
+        <input type="date" name="data" id="data">
+        <label for="horario">Horário</label>
+        <select name="horario" id="horario" disabled></select>
+        <p id="avisoHorario"></p>
+        </fieldset>
+        
+        
+        <fieldset>
+        <legend>Seus dados</legend>
+        <label for="nome">Nome</label>
+        <input type="text" name="nome" id="nome" placeholder="Seu nome" maxlength="60" autocomplete="name">
+        <label for="telefone">WhatsApp</label>
+        <input type="tel" name="telefone" id="telefone" placeholder="(27) 99999-9999" maxlength="15" autocomplete="tel">
+        </fieldset>
+        
+        <button type="submit">Calcular orçamento</button>
+        
+        <div class="resultado" id="resultado">
+        <p id="textoResultado"></p>
+        <a id="linkWhatsapp" class="botao-whatsapp" href="#" target="_blank" rel="noopener" hidden>
+            Enviar para o estúdio no WhatsApp
+        </a>
+        </div>
+            </form>
+        
+        </main>
+    </div>
 
 
     <script src="script.js"></script>
