@@ -15,6 +15,8 @@
 }
 
 body{
+    width: 100%;
+    height: 100%;
      background-image: url(img/mobile.jpg);
         background-position: center;
         background-size: cover;
@@ -28,18 +30,11 @@ body{
     gap: 20px;
     padding: 24px 16px;
 }
-.video-background {
-    position: fixed;
-    top: 0;
-    left: 0;
 
-    width: 100%;
-    height: 100%;
 
-    object-fit: cover;
 
-    z-index: -2;
-}
+
+
 body::before {
     content: "";
 
@@ -51,7 +46,59 @@ body::before {
     z-index: -1;
 }
 
+.inicio{
+    width: 100%;
+    height: 100vh;
+  
+}
+.logo{
+    width: 100%;
+    height: 40%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+.logo h1{
+    font-size: 5em;
+    font-family: var(--redonda);
+    font-weight: lighter;
+    text-transform: uppercase;
+}
 
+.logo p{
+    font-family: var(--redonda);
+    
+    font-size: 2em;
+}
+#autenticidade{
+    font-size: 2.1em;
+
+    font-family: var(--redonda);
+    font-weight: lighter;
+}
+.textoInicial{
+    width: 100%;
+    height: 80%;
+
+    display: flex;
+    flex-direction: column;
+    justify-content: start;
+    align-items: center;
+    text-transform: uppercase;
+    text-align: center;
+}
+
+.textoInicial p{
+    font-family: var(--fina);
+    margin-top: 20%;
+}
+
+.textoInicial i{
+    
+   font-size: 2.4em;
+   margin-top: 5%;
+}
 
 .header{
     display: flex;
@@ -177,6 +224,8 @@ input[type="date"]{
     margin-bottom: 8px;
 }
 
+
+
 /* telas maiores */
 @media (min-width: 600px){
     body{
@@ -189,6 +238,9 @@ input[type="date"]{
         font-weight: lighter;
     
         padding-top: 40px;
+    }
+    .inicio{
+        display: none;
     }
     .header h1{
         font-size: 3em;
